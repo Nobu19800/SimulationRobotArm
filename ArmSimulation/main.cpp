@@ -1,3 +1,4 @@
+#define dDOUBLE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +44,7 @@ typedef struct {
 
 
 
-MyLink link0, link1, link2, link3, linkh, linkf[2];
+MyLink link0, link1, link2, link3, linkhs, linkh, linkf[2];
 
 RobotArm *rb;
 
@@ -54,12 +55,12 @@ void makeParam()
 	link0.lx = rb->hi;
 	link0.ly = rb->wi;
 	link0.lz = rb->l[0];
-	link0.x = rb->px[0];
-	link0.y = rb->py[0];
-	link0.z = rb->pz[0];
-	link0.jx = rb->jx[0];
-	link0.jy = rb->jy[0];
-	link0.jz = rb->jz[0];
+	link0.x = rb->pl[0](0);
+	link0.y = rb->pl[0](1);
+	link0.z = rb->pl[0](2);
+	link0.jx = rb->jl[0](0);
+	link0.jy = rb->jl[0](1);
+	link0.jz = rb->jl[0](2);
 	link0.axisx = 0;
 	link0.axisy = 0;
 	link0.axisz = 1;
@@ -71,12 +72,12 @@ void makeParam()
 	link1.lx = rb->hi;
 	link1.ly = rb->wi;
 	link1.lz = rb->l[1];
-	link1.x = rb->px[1];
-	link1.y = rb->py[1];
-	link1.z = rb->pz[1];
-	link1.jx = rb->jx[1];
-	link1.jy = rb->jy[1];
-	link1.jz = rb->jz[1];
+	link1.x = rb->pl[1](0);
+	link1.y = rb->pl[1](1);
+	link1.z = rb->pl[1](2);
+	link1.jx = rb->jl[1](0);
+	link1.jy = rb->jl[1](1);
+	link1.jz = rb->jl[1](2);
 	link1.axisx = 0;
 	link1.axisy = 0;
 	link1.axisz = 1;
@@ -90,12 +91,12 @@ void makeParam()
 	link2.lx = rb->hi;
 	link2.ly = rb->wi;
 	link2.lz = rb->l[2];
-	link2.x = rb->px[2];
-	link2.y = rb->py[2];
-	link2.z = rb->pz[2];
-	link2.jx = rb->jx[2];
-	link2.jy = rb->jy[2];
-	link2.jz = rb->jz[2];
+	link2.x = rb->pl[2](0);
+	link2.y = rb->pl[2](1);
+	link2.z = rb->pl[2](2);
+	link2.jx = rb->jl[2](0);
+	link2.jy = rb->jl[2](1);
+	link2.jz = rb->jl[2](2);
 	link2.axisx = 1;
 	link2.axisy = 0;
 	link2.axisz = 0;
@@ -107,12 +108,12 @@ void makeParam()
 	link3.lx = rb->hi;
 	link3.ly = rb->l[3];
 	link3.lz = rb->wi;
-	link3.x = rb->px[3];
-	link3.y = rb->py[3];
-	link3.z = rb->pz[3];
-	link3.jx = rb->jx[3];
-	link3.jy = rb->jy[3];
-	link3.jz = rb->jz[3];
+	link3.x = rb->pl[3](0);
+	link3.y = rb->pl[3](1);
+	link3.z = rb->pl[3](2);
+	link3.jx = rb->jl[3](0);
+	link3.jy = rb->jl[3](1);
+	link3.jz = rb->jl[3](2);
 	link3.axisx = 1;
 	link3.axisy = 0;
 	link3.axisz = 0;
@@ -120,19 +121,36 @@ void makeParam()
 	link3.green = 1.;
 	link3.blue = 0.;
 
+	linkhs.m = rb->mh;
+	linkhs.lx = rb->wi;
+	linkhs.ly = rb->wi;
+	linkhs.lz = rb->wi;
+	linkhs.x = rb->jh(0);
+	linkhs.y = rb->jh(1);
+	linkhs.z = rb->jh(2);
+	linkhs.jx = rb->jh(0);
+	linkhs.jy = rb->jh(1);
+	linkhs.jz = rb->jh(2);
+	linkhs.axisx = 1;
+	linkhs.axisy = 0;
+	linkhs.axisz = 0;
+	linkhs.red = 1.;
+	linkhs.green = 1.;
+	linkhs.blue = 0.;
+
 	linkh.m = rb->mh;
 	linkh.lx = rb->rh;
 	linkh.ly = rb->wi;
 	linkh.lz = rb->lh;
-	linkh.x = rb->pxh;
-	linkh.y = rb->pyh;
-	linkh.z = rb->pzh;
-	linkh.jx = rb->jxh;
-	linkh.jy = rb->jyh;
-	linkh.jz = rb->jzh;
-	linkh.axisx = 1;
+	linkh.x = rb->ph(0);
+	linkh.y = rb->ph(1);
+	linkh.z = rb->ph(2);
+	linkh.jx = rb->jh(0);
+	linkh.jy = rb->jh(1);
+	linkh.jz = rb->jh(2);
+	linkh.axisx = 0;
 	linkh.axisy = 0;
-	linkh.axisz = 0;
+	linkh.axisz = 1;
 	linkh.red = 1.;
 	linkh.green = 1.;
 	linkh.blue = 0.;
@@ -144,14 +162,14 @@ void makeParam()
 		linkf[i].ly = rb->wf;
 		linkf[i].lz = rb->lf;
 		if(i == 0)
-			linkf[i].x = rb->pxf + rb->hw/2;
+			linkf[i].x = rb->pf(0) + rb->hw/2;
 		else
-			linkf[i].x = rb->pxf - rb->hw/2;
-		linkf[i].y = rb->pyf;
-		linkf[i].z = rb->pzf;
-		linkf[i].jx = rb->jxf;
-		linkf[i].jy = rb->jyf;
-		linkf[i].jz = rb->jzf;
+			linkf[i].x = rb->pf(0) - rb->hw/2;
+		linkf[i].y = rb->pf(1);
+		linkf[i].z = rb->pf(2);
+		linkf[i].jx = rb->jf(0);
+		linkf[i].jy = rb->jf(1);
+		linkf[i].jz = rb->jf(2);
 		linkf[i].axisx = 1;
 		linkf[i].axisy = 0;
 		linkf[i].axisz = 0;
@@ -217,6 +235,7 @@ void  makeRobot()
 	setBox(&link1);
 	setBox(&link2);
 	setBox(&link3);
+	setBox(&linkhs);
 	setCylinder(&linkh);
 	/*dMatrix3 R;
 	dRFromAxisAndAngle(R, 1, 0, 0, PI/2);
@@ -231,7 +250,8 @@ void  makeRobot()
 	setHinge(&link1, &link0);
 	setHinge(&link2, &link1);
 	setHinge(&link3, &link2);
-	setHinge(&linkh, &link3);
+	setHinge(&linkhs, &link3);
+	setHinge(&linkh, &linkhs);
 	setSlider(&linkf[0], &linkh);
 	setSlider(&linkf[1], &linkh);
 
@@ -302,7 +322,7 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
 		
 }
 
-void ControlHinge(MyLink *body, dReal theta)
+void controlHinge(MyLink *body, dReal theta)
 {
 	dReal kp = 100;
 	dReal tmp = dJointGetHingeAngle(body->joint);
@@ -313,7 +333,7 @@ void ControlHinge(MyLink *body, dReal theta)
 	dJointSetHingeParam(body->joint,dParamFMax,20.);
 }
 
-void ControlSlider(MyLink *body, dReal length)
+void controlSlider(MyLink *body, dReal length)
 {
 	dReal kp = 10;
 	dReal tmp = dJointGetSliderPosition(body->joint);
@@ -332,11 +352,11 @@ void Pcontrol()
 	dReal t2 = dJointGetHingeAngle(link2.joint);
 	dReal t3 = dJointGetHingeAngle(link3.joint);
 	rb->setAngle(-t1, -t2+PI/2, -t3);
-	MatrixXf ans = rb->calcKinematics();
+	Vector3d ans = rb->calcKinematics();
 	const dReal *db = dBodyGetPosition(linkh.body);
 	for(int i=0;i < 3;i++)
 	{
-		std::cout << i << ":\t" << ans(0,i) << std::endl;
+		std::cout << i << ":\t" << ans(i) << std::endl;
 		std::cout << i << ":\t" << db[i] << std::endl;
 	}*/
 
@@ -349,8 +369,11 @@ void Pcontrol()
 	//Vector3d ans = rb->calcJointVel(0.005, 0.005, 0.005);
 	//std::cout << fpos << std::endl;
 	//rb->updatePos(ans(0), ans(1), ans(2));
-
-	rb->setTargetPos(0.05, 0.05, 0.2, 3);
+	static bool test = true;
+	
+	if(test)
+		rb->addTargetPos(Vector3d(0.05, 0.05, 0.2), -1);
+	test = false;
 	rb->update(0.01);
 
 	//rb->CloseGripper();
@@ -358,12 +381,13 @@ void Pcontrol()
 	dReal r2 = dJointGetHingeAngle (link2.joint);
 	dReal r3 = dJointGetHingeAngle (link3.joint);
 
-	ControlHinge(&link1, -rb->theta[0]+rb->offset[0]);//
-	ControlHinge(&link2, -rb->theta[1]+rb->offset[1]);//
-	ControlHinge(&link3, -rb->theta[2]+rb->offset[2]);//
-	ControlHinge(&linkh, -r2-r3);//
-	ControlSlider(&linkf[0], rb->gripperPos/2);//
-	ControlSlider(&linkf[1], -rb->gripperPos/2);//
+	controlHinge(&link1, -rb->theta[0]+rb->offset[0]);//
+	controlHinge(&link2, -rb->theta[1]+rb->offset[1]);//
+	controlHinge(&link3, -rb->theta[2]+rb->offset[2]);//
+	controlHinge(&linkhs, -r2-r3);//
+	controlHinge(&linkh, -rb->theta[3]);//
+	controlSlider(&linkf[0], rb->gripperPos/2);//
+	controlSlider(&linkf[1], -rb->gripperPos/2);//
 
 	dReal t1 = dJointGetHingeAngleRate (link1.joint);
 	dReal t2 = dJointGetHingeAngleRate (link2.joint);
@@ -437,7 +461,8 @@ void setDrawStuff() {
 int main(int argc, char *argv[])
 {
   rb = new RobotArm();
-  rb->setOffset(0, PI/2, 0);
+  rb->setOffset(0, PI/2, 0, 0);
+  //rb->setHomePosition();
 
 
   dInitODE();
