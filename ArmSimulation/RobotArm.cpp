@@ -108,14 +108,14 @@ RobotArm::RobotArm()
 	
 
 
-	softUpperLimitJoint[0] = PI;
-	softUpperLimitJoint[1] = PI;
-	softUpperLimitJoint[2] = PI*3/2;
+	softUpperLimitJoint[0] = PI*50/180;
+	softUpperLimitJoint[1] = PI*105/180;
+	softUpperLimitJoint[2] = PI*65/180;
 	softUpperLimitJoint[3] = PI/2;
 
-	softLowerLimitJoint[0] = -PI;
-	softLowerLimitJoint[1] = -PI;
-	softLowerLimitJoint[2] = -PI/2;
+	softLowerLimitJoint[0] = -PI*50/180;
+	softLowerLimitJoint[1] = -0.001;
+	softLowerLimitJoint[2] = PI*10/180;
 	softLowerLimitJoint[3] = -PI/2;
 
 	serbo = true;
@@ -267,7 +267,7 @@ void RobotArm::setTargetPos()
 	startPoint(1) = pos(1);
 	startPoint(2) = pos(2);
 
-	if(endTime > 0)
+	if(targetPoints[0].time > 0)
 	{
 		endTime = targetPoints[0].time;
 	}
@@ -277,7 +277,7 @@ void RobotArm::setTargetPos()
 		double dy = targetPoint(1)-startPoint[1];
 		double dz = targetPoint(2)-startPoint[2];
 
-		double ST = sqrt(dx*dx+dy*dy+dz*dz)*20;
+		double ST = sqrt(dx*dx+dy*dy+dz*dz)*10;
 		if(ST < 0.1)
 			ST = 0.1;
 		endTime = ST;
@@ -365,16 +365,29 @@ void RobotArm::judgeSoftLimitJoint()
 {
 	for(int i=0;i < 4;i++)
 	{
-		if(theta[i] > softUpperLimitJoint[i])
+		double mpos = theta[i];
+		if(i == 2)
+			mpos = theta[2] + theta[1];
+		
+		if(mpos > softUpperLimitJoint[i])
 		{
 			
-			theta[i] = softUpperLimitJoint[i];
+			if(i == 2)
+				theta[2] = softUpperLimitJoint[i] - theta[1];
+			else
+				theta[i] = softUpperLimitJoint[i];
+			
 			stop();
+			
 		}
-		else if(theta[i] < softLowerLimitJoint[i])
+		else if(mpos < softLowerLimitJoint[i])
 		{
-			theta[i] = softLowerLimitJoint[i];
+			if(i == 2)
+				theta[2] = softLowerLimitJoint[i] - theta[1];
+			else
+				theta[i] = softLowerLimitJoint[i];
 			stop();
+			
 		}
 	}
 }
@@ -401,22 +414,11 @@ void RobotArm::updatePos(double v1, double v2, double v3, double v4)
 
 void RobotArm::setBaseOffset(double *bo)
 {
-	baseOffset(0,0) = bo[0];
-	baseOffset(1,0) = bo[1];
-	baseOffset(2,0) = bo[2];
-	baseOffset(3,0) = bo[3];
-	baseOffset(0,1) = bo[4];
-	baseOffset(1,1) = bo[5];
-	baseOffset(2,1) = bo[6];
-	baseOffset(3,1) = bo[7];
-	baseOffset(0,2) = bo[8];
-	baseOffset(1,2) = bo[9];
-	baseOffset(2,2) = bo[10];
-	baseOffset(3,2) = bo[11];
-	baseOffset(0,3) = bo[12];
-	baseOffset(1,3) = bo[13];
-	baseOffset(2,3) = bo[14];
-	baseOffset(3,3) = bo[15];
+	for(int i=0;i < 12;i++)
+	{
+		baseOffset[i] = bo[i];
+	}
+	
 }
 
 void RobotArm::setMaxSpeedCartesian(Vector3d msc)
@@ -450,7 +452,7 @@ void RobotArm::resume()
 
 void RobotArm::stop()
 {
-	stopFalg = false;
+	stopFalg = true;
 }
 
 void RobotArm::setSoftLimitJoint(double *usl, double *lsl)
@@ -474,4 +476,25 @@ void RobotArm::setSerbo(bool state)
 void RobotArm::setHandJointPosition(double hjp)
 {
 	theta[3] = hjp;
+}
+
+void RobotArm::setStartPos(double j1, double j2, double j3, double j4)
+{
+	double hp[4] = {j1, j2,j3, j4};
+	setAngle(j1, j2,j3, j4);
+	setHomePosition(hp);
+	homePosition = calcKinematics();
+	targetPoint = homePosition;
+	startPoint = homePosition;
+
+	if(targetPoints.size() > 0)
+		targetPoints.erase(targetPoints.begin());
+	endTime = -1;
+
+	start();
+}
+
+void RobotArm::start()
+{
+	stopFalg = false;
 }

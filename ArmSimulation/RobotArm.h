@@ -82,7 +82,7 @@ public:
 	
 
 
-	Matrix4d baseOffset;
+	double baseOffset[12];
 	Vector3d maxSpeedCartesian;
 	double maxSpeedJoint[4];
 	Vector3d softUpperLimitCartesian;
@@ -100,7 +100,8 @@ public:
 	bool isGripper;
 
 	void setHandJointPosition(double hjp);
-
+	void setStartPos(double j1, double j2, double j3, double j4);
+	void start();
 };
 
 

@@ -255,6 +255,9 @@ void  makeRobot()
 	setSlider(&linkf[0], &linkh);
 	setSlider(&linkf[1], &linkh);
 
+	rb->setOffset(0, PI/2, 0, 0);
+	rb->setStartPos(0, 1.5, -0.5, 0);
+
 }
 
 void drawBox(MyLink *body)
@@ -372,7 +375,7 @@ void Pcontrol()
 	static bool test = true;
 	
 	if(test)
-		rb->addTargetPos(Vector3d(0.05, 0.05, 0.2), -1);
+		rb->addTargetPos(Vector3d(-0.05, 0.05, 0.15), -1);
 	test = false;
 	rb->update(0.01);
 
@@ -380,6 +383,9 @@ void Pcontrol()
 
 	dReal r2 = dJointGetHingeAngle (link2.joint);
 	dReal r3 = dJointGetHingeAngle (link3.joint);
+
+	//for(int i=0;i < 3;i++)
+	//	std::cout << rb->theta[i] << std::endl;
 
 	controlHinge(&link1, -rb->theta[0]+rb->offset[0]);//
 	controlHinge(&link2, -rb->theta[1]+rb->offset[1]);//
@@ -461,8 +467,7 @@ void setDrawStuff() {
 int main(int argc, char *argv[])
 {
   rb = new RobotArm();
-  rb->setOffset(0, PI/2, 0, 0);
-  //rb->setHomePosition();
+  
 
 
   dInitODE();
@@ -477,7 +482,7 @@ int main(int argc, char *argv[])
   makeParam();
   makeRobot();
 
-dsSimulationLoop(argc,argv,800,480,&fn);
+  dsSimulationLoop(argc,argv,800,480,&fn);
 
   dSpaceDestroy(space);
   dWorldDestroy(world);
