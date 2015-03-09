@@ -3,12 +3,86 @@
 
 //std::ofstream ofs( "test.txt" );
 
-TargetPoint::TargetPoint(Vector3d p, double t)
+TargetPos::TargetPos()
 {
-	pos(0) = p(0);
-	pos(1) = p(1);
-	pos(2) = p(2);
-	time = t;
+	time = 0;
+	
+}
+
+void TargetPos::setPoint(double t, Vector3d t_p,  double the)
+{
+
+	target_pos(0) = t_p(0);
+	target_pos(1) = t_p(1);
+	target_pos(2) = t_p(2);
+	target_theta = the;
+	type = Point;
+
+	end_time = t;
+}
+
+void TargetPos::setStartPoint(Vector3d s_p, double the, double speed)
+{
+	start_pos(0) = s_p(0);
+	start_pos(1) = s_p(1);
+	start_pos(2) = s_p(2);
+
+	start_theta = the;
+
+	if(end_time <= 0)
+	{
+		double dx = target_pos(0)-start_pos[0];
+		double dy = target_pos(1)-start_pos[1];
+		double dz = target_pos(2)-start_pos[2];
+
+		end_time = sqrt(dx*dx+dy*dy+dz*dz)*speed;
+		if(end_time < 0.1)
+			end_time = 0.1;
+		
+		std::cout << end_time << std::endl;
+	}
+}
+
+
+void TargetPos::setJointPos(double t, double *t_p)
+{
+	for(int i=0;i < 4;i++)
+	{
+
+		target_joint_pos[i] = t_p[i];
+	}
+	type = Joint;
+
+	end_time = t;
+}
+
+void TargetPos::setStartJointPos(double *s_p, double speed)
+{
+	for(int i=0;i < 4;i++)
+	{
+		start_joint_pos[i] = s_p[i];
+
+	}
+
+	if(end_time <= 0)
+	{
+		
+		double d = 0;
+		for(int i=0;i < 4;i++)
+		{
+			double tmp = target_joint_pos[i]-start_joint_pos[i];
+			tmp = tmp*tmp;
+			if(d < tmp)
+				d += tmp;
+		}
+
+		end_time = sqrt(d)*speed;
+
+		if(end_time < 0.1)
+			end_time = 0.1;
+		
+		std::cout << end_time << std::endl;
+	}
 }
 
 RobotArm::RobotArm()
@@ -76,8 +150,8 @@ RobotArm::RobotArm()
 
 
 	dt = 0.01;
-	endTime = -1;
-	time = 0;
+	//endTime = -1;
+	//time = 0;
 	/*targetPoint(0) = 0;
 	targetPoint(1) = 0;
 	targetPoint(2) = 0;
@@ -89,6 +163,7 @@ RobotArm::RobotArm()
 	setOffset(0,0,0,0);
 
 	Kp = 10;
+	Kjp = 10;
 	
 	openGripper();
 
@@ -108,14 +183,14 @@ RobotArm::RobotArm()
 	
 
 
-	softUpperLimitJoint[0] = PI*50/180;
+	softUpperLimitJoint[0] = PI*90/180;
 	softUpperLimitJoint[1] = PI*105/180;
-	softUpperLimitJoint[2] = PI*65/180;
+	softUpperLimitJoint[2] = PI*90/180;
 	softUpperLimitJoint[3] = PI/2;
 
-	softLowerLimitJoint[0] = -PI*50/180;
+	softLowerLimitJoint[0] = -PI*90/180;
 	softLowerLimitJoint[1] = -0.001;
-	softLowerLimitJoint[2] = PI*10/180;
+	softLowerLimitJoint[2] = -0.001;
 	softLowerLimitJoint[3] = -PI/2;
 
 	serbo = true;
@@ -125,18 +200,23 @@ RobotArm::RobotArm()
 	axisNum = 4;
 	cmdCycle = 100;
 	isGripper = false;
+
+	speedPoint = 10;
+	speedJointPos = 5;
 	
 
 }
 
 void RobotArm::goHomePosition()
 {
-	homePosition = calcKinematics();
+	//homePosition = calcKinematics();
 
-	targetPoint = homePosition;
+	//targetPoint = homePosition;
+
+	addTargetJointPos(homeTheta, -1);
 	
 
-	startPoint = homePosition;
+	//startPoint = homePosition;
 	
 }
 
@@ -164,22 +244,35 @@ void RobotArm::closeGripper()
 
 void RobotArm::update(double st)
 {
+	
 	if(pauseFalg || stopFalg || !serbo)
 		return;
-	if(endTime < time)
+	//std::cout << targetPoint.end_time << "\t" << targetPoint.time << std::endl;
+	if(targetPoint.end_time < targetPoint.time)
 	{
-		Vector3d pos = calcKinematics();
+		if(targetPoint.type == Point)
+		{
+			/*Vector3d pos = calcKinematics();
 
-		double dPx = Kp*(targetPoint(0)-pos(0));
-		double dPy = Kp*(targetPoint(1)-pos(1));
-		double dPz = Kp*(targetPoint(2)-pos(2));
+			double dPx = Kp*(targetPoint.target_pos(0)-pos(0));
+			double dPy = Kp*(targetPoint.target_pos(1)-pos(1));
+			double dPz = Kp*(targetPoint.target_pos(2)-pos(2));
 
-		Vector3d dthe = calcJointVel(Vector3d(dPx, dPy, dPz));
+			Vector3d dthe = calcJointVel(Vector3d(dPx, dPy, dPz));
 
-		updatePos(dthe(0), dthe(1), dthe(2), 0);
+			updatePos(dthe(0), dthe(1), dthe(2), 0);*/
+			
+		}
+		else
+		{
+			for(int i=0;i < 4;i++)
+			{
+				theta[i] = targetPoint.target_joint_pos[i];
+			}
+			judgeSoftLimitJoint();
+		}
 
 		
-
 		setTargetPos();
 
 		
@@ -188,40 +281,73 @@ void RobotArm::update(double st)
 	}
 	else
 	{
-		dt = st;
+		if(targetPoint.type == Point)
+		{
+			double td = calcVel(targetPoint.target_theta, targetPoint.start_theta, targetPoint.end_time, targetPoint.time, theta[3]);
 
-		double dx = targetPoint(0)-startPoint[0];
-		double dy = targetPoint(1)-startPoint[1];
-		double dz = targetPoint(2)-startPoint[2];
+			dt = st;
 
-		double ST = sqrt(dx*dx+dy*dy+dz*dz);
+			double dx = targetPoint.target_pos(0)-targetPoint.start_pos(0);
+			double dy = targetPoint.target_pos(1)-targetPoint.start_pos(1);
+			double dz = targetPoint.target_pos(2)-targetPoint.start_pos(2);
 
-		double A = 2*PI*ST/(endTime*endTime);
+			double ST = sqrt(dx*dx+dy*dy+dz*dz);
+			if(ST < 0.001)
+			{
+				updatePos(0, 0, 0, td);
+				return;
+			}
 
-		double s = A*endTime/(2*PI)*(time - endTime/(2*PI)*sin(2*PI/endTime*time));
+			double A = 2*PI*ST/(targetPoint.end_time*targetPoint.end_time);
 
-		double Px = s*dx/ST + startPoint[0];
-		double Py = s*dy/ST + startPoint[1];
-		double Pz = s*dz/ST + startPoint[2];
+			double s = A*targetPoint.end_time/(2*PI)*(targetPoint.time - targetPoint.end_time/(2*PI)*sin(2*PI/targetPoint.end_time*targetPoint.time));
+
+			double Px = s*dx/ST + targetPoint.start_pos(0);
+			double Py = s*dy/ST + targetPoint.start_pos(1);
+			double Pz = s*dz/ST + targetPoint.start_pos(2);
 
 
-		double ds = A*endTime/(2*PI)*(1 - cos(2*PI/endTime*time));
+			double ds = A*targetPoint.end_time/(2*PI)*(1 - cos(2*PI/targetPoint.end_time*targetPoint.time));
 
-		Vector3d pos = calcKinematics();
+			Vector3d pos = calcKinematics();
 
-		double dPx = ds*dx/ST + Kp*(Px-pos(0));
-		double dPy = ds*dy/ST + Kp*(Py-pos(1));
-		double dPz = ds*dz/ST + Kp*(Pz-pos(2));
+			double dPx = ds*dx/ST + Kp*(Px-pos(0));
+			double dPy = ds*dy/ST + Kp*(Py-pos(1));
+			double dPz = ds*dz/ST + Kp*(Pz-pos(2));
 
 		
-		//ofs << ds << "\t" << s << std::endl;
-		//std::cout << pos << std::endl;
+			//ofs << ds << "\t" << s << std::endl;
+			//std::cout << pos << std::endl;
 
-		time += dt;
+			
 
-		Vector3d dthe = calcJointVel(Vector3d(dPx, dPy, dPz));
+			Vector3d dthe = calcJointVel(Vector3d(dPx, dPy, dPz));
 
-		updatePos(dthe(0), dthe(1), dthe(2), 0);
+
+			
+			
+
+			updatePos(dthe(0), dthe(1), dthe(2), td);
+		}
+		else
+		{
+			double dthe[4];
+			
+			for(int i=0;i < 4;i++)
+			{
+				
+				dthe[i] = calcVel(targetPoint.target_joint_pos[i], targetPoint.start_joint_pos[i], targetPoint.end_time, targetPoint.time, theta[i]);
+
+
+				
+			}
+
+			updatePos(dthe[0], dthe[1], dthe[2], dthe[3]);
+
+			
+			
+		}
+		targetPoint.time += dt;
 	}
 	
 }
@@ -237,12 +363,20 @@ void RobotArm::setOffset(double o1, double o2, double o3, double o4)
 
 	double hp[4] = {o1, o2, o3, o4};
 	setHomePosition(hp);
-	goHomePosition();
+	//goHomePosition();
 }
 
-void RobotArm::addTargetPos(Vector3d p, double T)
+void RobotArm::addTargetPos(Vector3d p, double the, double T)
 {
-	TargetPoint tp(p,T);
+	TargetPos tp;
+	tp.setPoint(T, p, the);
+	targetPoints.push_back(tp);
+}
+
+void RobotArm::addTargetJointPos(double *p, double T)
+{
+	TargetPos tp;
+	tp.setJointPos(T, p);
 	targetPoints.push_back(tp);
 }
 
@@ -256,33 +390,32 @@ void RobotArm::setTargetPos()
 	
 	//std::cout << "test" << std::endl;
 	
-	time = 0;
+	/*time = 0;
 	targetPoint(0) = targetPoints[0].pos(0);
 	targetPoint(1) = targetPoints[0].pos(1);
-	targetPoint(2) = targetPoints[0].pos(2);
+	targetPoint(2) = targetPoints[0].pos(2);*/
 
 
-	Vector3d pos = calcKinematics();
-	startPoint(0) = pos(0);
-	startPoint(1) = pos(1);
-	startPoint(2) = pos(2);
-
-	if(targetPoints[0].time > 0)
+	if(targetPoints[0].type == Point)
 	{
-		endTime = targetPoints[0].time;
-	}
-	else
-	{
-		double dx = targetPoint(0)-startPoint[0];
-		double dy = targetPoint(1)-startPoint[1];
-		double dz = targetPoint(2)-startPoint[2];
+		Vector3d pos = calcKinematics();
+		/*startPoint(0) = pos(0);
+		startPoint(1) = pos(1);
+		startPoint(2) = pos(2);*/
 
-		double ST = sqrt(dx*dx+dy*dy+dz*dz)*10;
-		if(ST < 0.1)
-			ST = 0.1;
-		endTime = ST;
-		std::cout << ST << std::endl;
+		targetPoints[0].setStartPoint(pos,theta[3],speedPoint);
 	}
+
+	else if(targetPoints[0].type == Joint)
+	{
+		targetPoints[0].setStartJointPos(theta, speedJointPos);
+
+		
+	}
+
+	targetPoint = targetPoints[0];
+
+	
 
 	targetPoints.erase(targetPoints.begin());
 
@@ -368,6 +501,8 @@ void RobotArm::judgeSoftLimitJoint()
 		double mpos = theta[i];
 		if(i == 2)
 			mpos = theta[2] + theta[1];
+
+		
 		
 		if(mpos > softUpperLimitJoint[i])
 		{
@@ -484,12 +619,15 @@ void RobotArm::setStartPos(double j1, double j2, double j3, double j4)
 	setAngle(j1, j2,j3, j4);
 	setHomePosition(hp);
 	homePosition = calcKinematics();
-	targetPoint = homePosition;
-	startPoint = homePosition;
+	targetPoint.setJointPos(1, hp);
+	targetPoint.setStartJointPos(hp, speedJointPos);
+	targetPoint.time = 1000;
+	//targetPoint = homePosition;
+	//startPoint = homePosition;
 
 	if(targetPoints.size() > 0)
 		targetPoints.erase(targetPoints.begin());
-	endTime = -1;
+	//endTime = -1;
 
 	start();
 }
@@ -497,4 +635,18 @@ void RobotArm::setStartPos(double j1, double j2, double j3, double j4)
 void RobotArm::start()
 {
 	stopFalg = false;
+}
+
+double RobotArm::calcVel(double target_theta, double start_theta, double end_time, double time, double angle)
+{
+	double d = target_theta - start_theta;
+	double A = 2*PI*d/(end_time*end_time);
+	double s = A*end_time/(2*PI)*(time - end_time/(2*PI)*sin(2*PI/end_time*time));
+	double ds = A*end_time/(2*PI)*(1 - cos(2*PI/end_time*time));
+	double the = s + start_theta;
+		
+	
+	return ds + Kjp*(the-angle);
+
+	
 }

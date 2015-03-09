@@ -12,13 +12,32 @@ using namespace Eigen;
 const double PI = 3.141592;
 
 
-class TargetPoint
+enum MoveType { Joint = 0, Point = 1, };
+
+class TargetPos
 {
 public:
-	TargetPoint(Vector3d p, double t);
+	TargetPos();
+	double end_time;
 	double time;
-	Vector3d pos;
+	MoveType type;
+	Vector3d start_pos;
+	Vector3d target_pos;
+	double start_joint_pos[4];
+	double target_joint_pos[4];
+	double target_theta;
+	double start_theta; 
+
+	void setPoint(double t, Vector3d t_p, double the);
+	void setJointPos(double t, double *t_p);
+
+	void setStartPoint(Vector3d s_p, double the, double speed);
+	void setStartJointPos(double *s_p, double speed);
+
+	
 };
+
+
 
 class RobotArm
 {
@@ -34,7 +53,8 @@ public:
 	void update(double st);
 	void openGripper();
 	void closeGripper();
-	void addTargetPos(Vector3d p, double T);
+	void addTargetPos(Vector3d p, double the, double T);
+	void addTargetJointPos(double *p, double T);
 
 
 	double l[4],lh,lf;
@@ -54,18 +74,20 @@ public:
 	double homeTheta[4];
 
 	double dt;
-	double endTime;
+	//double endTime;
 	double time;
-	Vector3d targetPoint;
-	Vector3d startPoint;
+	//Vector3d targetPoint;
+	//Vector3d startPoint;
 
 	double offset[4];
 
 	double Kp;
+	double Kjp;
 
 	double gripperPos;
 
-	std::vector<TargetPoint> targetPoints;
+	std::vector<TargetPos> targetPoints;
+	TargetPos targetPoint;
 
 	void setBaseOffset(double *bo);
 	void setMaxSpeedCartesian(Vector3d msc);
@@ -99,9 +121,14 @@ public:
 	int cmdCycle;
 	bool isGripper;
 
+	double speedPoint;
+	double speedJointPos;
+
 	void setHandJointPosition(double hjp);
 	void setStartPos(double j1, double j2, double j3, double j4);
 	void start();
+
+	double calcVel(double target_theta, double start_theta, double end_time, double time, double angle);
 };
 
 
