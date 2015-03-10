@@ -202,7 +202,7 @@ RobotArm::RobotArm()
 	isGripper = false;
 
 	speedPoint = 10;
-	speedJointPos = 5;
+	speedJointPos = 1;
 	
 
 }
