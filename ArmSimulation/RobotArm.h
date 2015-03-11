@@ -114,6 +114,8 @@ public:
 	Vector3d homePosition;
 	double softUpperLimitJoint[4];
 	double softLowerLimitJoint[4];
+	double jointOffset[4];
+	double motorAngle[4];
 	bool serbo;
 	std::string manifactur;
 	std::string type;
@@ -128,6 +130,7 @@ public:
 	void setStartPos(double j1, double j2, double j3, double j4);
 	void start();
 
+	double* getMotorPosition();
 	double calcVel(double target_theta, double start_theta, double end_time, double time, double angle);
 };
 

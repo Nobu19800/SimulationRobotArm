@@ -36,6 +36,14 @@ void TargetPos::setStartPoint(Vector3d s_p, double the, double speed)
 		double dz = target_pos(2)-start_pos[2];
 
 		end_time = sqrt(dx*dx+dy*dy+dz*dz)*speed;
+
+		double dt = target_theta-start_theta;
+		dt = sqrt(dt*dt)*speed/10.;
+		if(end_time < dt)
+			end_time = dt;
+
+		
+
 		if(end_time < 0.1)
 			end_time = 0.1;
 		
@@ -203,6 +211,11 @@ RobotArm::RobotArm()
 
 	speedPoint = 10;
 	speedJointPos = 1;
+
+	jointOffset[0] = PI*90/180;
+	jointOffset[1] = PI*20/180;
+	jointOffset[2] = PI*105/180;
+	jointOffset[3] = PI/2;
 	
 
 }
@@ -295,6 +308,7 @@ void RobotArm::update(double st)
 			if(ST < 0.001)
 			{
 				updatePos(0, 0, 0, td);
+				targetPoint.time += dt;
 				return;
 			}
 
@@ -649,4 +663,15 @@ double RobotArm::calcVel(double target_theta, double start_theta, double end_tim
 	return ds + Kjp*(the-angle);
 
 	
+}
+
+double* RobotArm::getMotorPosition()
+{
+	
+	motorAngle[0] = theta[0] + jointOffset[0];
+	motorAngle[1] = theta[1] + jointOffset[1];
+	motorAngle[2] = - theta[2] - theta[1] + jointOffset[2];
+	motorAngle[3] = theta[3] + jointOffset[3];
+
+	return motorAngle;
 }
